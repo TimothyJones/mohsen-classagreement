@@ -7,6 +7,7 @@ import (
   "log"
   "fmt"
   "encoding/csv"
+  "strconv"
 )
 
 type AvB struct {
@@ -16,8 +17,19 @@ type AvB struct {
 
 type SubcollectionRun struct {
   name string
+  sortkey float64
   yesNo [120]AvB
 }
+
+type SubcollectionRuns []*SubcollectionRun
+
+func (s SubcollectionRuns) Len() int      { return len(s) }
+func (s SubcollectionRuns) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+
+type BySortkey struct{ SubcollectionRuns }
+
+func (s BySortkey) Less(i, j int) bool { return s.SubcollectionRuns[i].sortkey > s.SubcollectionRuns[j].sortkey }
+
 
 func (a *AvB) ssa(b *AvB) int {
     if (a.a == true && b.a == true) ||
@@ -34,6 +46,7 @@ func (a *AvB) ssd(b *AvB) int {
     }
     return 0
 }
+
 func (a *AvB) sn(b *AvB) int {
     if (a.a == true && b.b == false && b.a == false) ||
        (a.b == true && b.b == false && b.a == false) {
@@ -41,6 +54,7 @@ func (a *AvB) sn(b *AvB) int {
     }
     return 0
 }
+
 func (a *AvB) ns(b *AvB) int {
     if (b.a == true && a.b == false && a.a == false) ||
        (b.b == true && a.b == false && a.a == false) {
@@ -48,6 +62,7 @@ func (a *AvB) ns(b *AvB) int {
     }
     return 0
 }
+
 func (a *AvB) nn(b *AvB) int {
     if a.a == false && b.a == false &&
        a.b == false && b.b == false {
@@ -80,22 +95,29 @@ func CalcClassAgreement(colA , colB *SubcollectionRun) (agree, disagree float64)
 var numLines int
 
 
-func CreateRun(filename string) *SubcollectionRun {
+func CreateRun(filename string,sortkey int64) *SubcollectionRun {
   file, err := os.Open(filename) // For read access.
   if err != nil {
-    log.Fatal(err)
+    log.Fatal(filename," ",  err)
   }
 
   defer file.Close()
-  reader := csv.NewReader(file)
-  // we don't care about the first record, it's the header
-  _ , err = reader.Read()
-  if err != nil {
-    log.Fatal(err)
-  }
-
   run := new(SubcollectionRun)
   run.name = path.Base(filename);
+
+  reader := csv.NewReader(file)
+  reader.TrailingComma = true;
+  // the first record is the sort header
+  record , err := reader.Read()
+  if err != nil {
+    log.Fatal(filename, " ",err)
+  }
+
+  run.sortkey, err = strconv.ParseFloat(record[sortkey],64)
+  if err != nil {
+    log.Fatal(filename, " ", err)
+  }
+
   i := 0
   var l, r int
   for {
@@ -103,7 +125,7 @@ func CreateRun(filename string) *SubcollectionRun {
       if err == io.EOF {
           break
       } else if err != nil {
-          log.Fatal(err)
+          log.Fatal(filename, " ", err)
       }
       if record[1] == "yes" {
         run.yesNo[i].a = true
