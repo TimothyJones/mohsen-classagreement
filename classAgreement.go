@@ -114,6 +114,10 @@ func CreateRun(filename string,sortkey int64) *SubcollectionRun {
   }
 
   run.sortkey, err = strconv.ParseFloat(record[sortkey],64)
+
+  
+  fmt.Println(run.name , ": num documents ",record[0], " num evaluated ", record[1], " percent evaluated " , record[2], " num rel " ,record[3], " percent rel ", record[4], " num non-rel " , record[5], " percent non-rel ", record[6]  );
+
   if err != nil {
     log.Fatal(filename, " ", err)
   }
@@ -148,7 +152,7 @@ func CreateRun(filename string,sortkey int64) *SubcollectionRun {
     log.Fatal("Read the incorrect number of lines (",i," vs ",numLines,") when reading '",run.name,"'")
   }
 
-  fmt.Println(run.name, " read with ",l , " left and ",r," right from ",i, " lines" );
+  //fmt.Println(run.name, " read with ",l , " left and ",r," right from ",i, " lines" );
 
   return run
 }
