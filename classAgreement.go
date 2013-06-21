@@ -10,27 +10,51 @@ import (
   "strconv"
 )
 
+
+// Used to describe an input line from Mohsen's format.
+// for example, 
+//     name,"yes","no" 
+// becomes
+//     {a=true, b=false}
 type AvB struct {
   a bool
   b bool
 }
 
+// This describes a whole Mohsen format file.
+//
+// name is the basename of the file
+// sortkey is the value of the key used to sort at output time
+// yesNo is an array of type AvB to represent the data lines
 type SubcollectionRun struct {
   name string
   sortkey float64
   yesNo [120]AvB
 }
 
+// Used at sort time to hold all of the runs in the input folder
+// Implements most of  sort.Interface
 type SubcollectionRuns []*SubcollectionRun
 
+//Returns the length of a SubCollectionRuns type.
+// Part of sort.Interface. 
 func (s SubcollectionRuns) Len() int      { return len(s) }
+
+// Swaps two SubcollectionRun instances in a SubcollectionRuns type.
+// Part of sort.Interface
 func (s SubcollectionRuns) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
+// Describes a sort by the sosrt key, and completes the implementation of
+// sort.Interface
 type BySortkey struct{ SubcollectionRuns }
 
+// Part of sort.Interface. Just compares the sort keys of two SubcollectionRun instances.
 func (s BySortkey) Less(i, j int) bool { return s.SubcollectionRuns[i].sortkey > s.SubcollectionRuns[j].sortkey }
 
 
+// Returns 1 if a and b show SSA agreement, 0 otherwise.
+//
+// See the paper linked in the project description for details
 func (a *AvB) ssa(b *AvB) int {
     if (a.a == true && b.a == true) ||
        (a.b == true && b.b == true) {
@@ -39,6 +63,9 @@ func (a *AvB) ssa(b *AvB) int {
     return 0
 }
 
+// Returns 1 if a and b show SSD agreement, 0 otherwise.
+//
+// See the paper linked in the project description for details
 func (a *AvB) ssd(b *AvB) int {
     if (a.a == true && b.b == true) ||
        (a.b == true && b.a == true) {
@@ -47,6 +74,9 @@ func (a *AvB) ssd(b *AvB) int {
     return 0
 }
 
+// Returns 1 if a and b show SN agreement, 0 otherwise.
+//
+// See the paper linked in the project description for details
 func (a *AvB) sn(b *AvB) int {
     if (a.a == true && b.b == false && b.a == false) ||
        (a.b == true && b.b == false && b.a == false) {
@@ -55,6 +85,9 @@ func (a *AvB) sn(b *AvB) int {
     return 0
 }
 
+// Returns 1 if a and b show NS agreement, 0 otherwise.
+//
+// See the paper linked in the project description for details
 func (a *AvB) ns(b *AvB) int {
     if (b.a == true && a.b == false && a.a == false) ||
        (b.b == true && a.b == false && a.a == false) {
@@ -63,6 +96,9 @@ func (a *AvB) ns(b *AvB) int {
     return 0
 }
 
+// Returns 1 if a and b show NN agreement, 0 otherwise.
+//
+// See the paper linked in the project description for details
 func (a *AvB) nn(b *AvB) int {
     if a.a == false && b.a == false &&
        a.b == false && b.b == false {
@@ -71,6 +107,10 @@ func (a *AvB) nn(b *AvB) int {
     return 0
 }
 
+
+// Calculates the SSA and NN class agreement between two Mohsen files.
+// 
+// Returns SSA and NN agreement as float64.
 func CalcClassAgreement(colA , colB *SubcollectionRun) (agree, disagree float64) {
   var i, ssa, ssd, sn, ns, nn int
 
@@ -92,9 +132,15 @@ func CalcClassAgreement(colA , colB *SubcollectionRun) (agree, disagree float64)
 }
 
 
+// Stores the number of lines in an input file.
+// Used to validate the input
 var numLines int
 
 
+
+// Reads in mohsen format files (see the project description for format details).
+//
+// Takes the filename to read and an index for the sort key in the header.
 func CreateRun(filename string,sortkey int64) *SubcollectionRun {
   file, err := os.Open(filename) // For read access.
   if err != nil {

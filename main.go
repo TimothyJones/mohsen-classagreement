@@ -1,3 +1,59 @@
+/*
+mohsen-classagreement generates class agreement tables similar to those found in the following paper:
+
+        @inproceedings{Moffat:2012:MMI:2407085.2407092,
+         author = {Moffat, Alistair and Scholer, Falk and Thomas, Paul},
+         title = {Models and metrics: IR evaluation as a user process},
+         booktitle = {Proceedings of the Seventeenth Australasian Document Computing Symposium},
+         series = {ADCS '12},
+         year = {2012},
+         isbn = {978-1-4503-1411-4},
+         location = {Dunedin, New Zealand},
+         pages = {47--54},
+         numpages = {8},
+         url = {http://doi.acm.org/10.1145/2407085.2407092},
+         doi = {10.1145/2407085.2407092},
+         acmid = {2407092},
+         publisher = {ACM},
+         address = {New York, NY, USA},
+         keywords = {evaluation, retrieval experiment, system measurement},
+        } 
+
+The tables differ in that instead of putting the SSA and NN tables straight in to the two diagonal halves
+of one table, two tables are produced. This approach introduces a little bit of duplication in the table, 
+but is slightly easier to read, as you can read down one column or across one row to see the information for
+one class. Additionally, the output table is sorted.
+
+It takes as input the tables produced by Mohsen Laali's code at https://github.com/Mohsen-Laali/TREC_COD ,
+with a different header line.  The format of the input table is:
+
+      <header line>
+      <data line 1>
+      ....
+      <data line 120>
+
+Where the header line contains S sort keys as floating point numbers, separated by commas. These sort keys are used to sort the output table.
+
+Data lines are of the form:
+
+      <test name>,<System A better than B>,<System B better than A>,,,, 
+
+with enough empty columns to bring the file up to S entries.
+
+The <System A better than B> entries should be "yes" if System A is statistically significantly better than System B, and "no" otherwise.
+Similarly, the <System B better than A> entries should be "yes" if System B is statistically significantly better than System A, and "no" otherwise.
+
+Test name entries are ignored by this program.
+
+Usage:
+     
+     mohsen-classagreement <DIR> [index]
+
+DIR is a path to a directory containing several csv files in the format described above, and index is the index in the header line to sort the results by (0 if unspecified).
+
+All input files must be the same length, and this is confirmed at input time.
+
+*/
 package main
 
 import (
@@ -9,6 +65,7 @@ import (
   "log"
   "strconv"
 )
+
 
 func main() {
   if len(os.Args) < 2 || len(os.Args) > 3 {
