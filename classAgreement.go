@@ -28,6 +28,7 @@ type AvB struct {
 // yesNo is an array of type AvB to represent the data lines
 type SubcollectionRun struct {
   name string
+  filename string
   sortkey float64
   yesNo [120]AvB
 }
@@ -115,8 +116,9 @@ func CalcClassAgreement(colA , colB *SubcollectionRun) (agree, disagree float64)
   var i, ssa, ssd, sn, ns, nn int
 
   if len(colA.yesNo) != len(colB.yesNo) {
-    log.Fatal("Trying to calculate class agreement on non equal length lists");
+    log.Fatal("Trying to calculate class agreement on non equal length lists")
   }
+  //fmt.Println("Comparing",colA.filename,colB.filename)
 
   for ; i < 120 ; i++ {
     ssa += colA.yesNo[i].ssa(&colB.yesNo[i])
@@ -125,9 +127,11 @@ func CalcClassAgreement(colA , colB *SubcollectionRun) (agree, disagree float64)
     ns += colA.yesNo[i].ns(&colB.yesNo[i])
     nn += colA.yesNo[i].nn(&colB.yesNo[i])
   }
-  if ssa + ssd + sn + ns + nn > len(colA.yesNo) {
-    log.Fatal("Too many ssa, ssd, dn, nd, nn - check the tests")
+  if ssa + ssd + sn + ns + nn != len(colA.yesNo) {
+    log.Fatal("Incorrect number of ssa, ssd, dn, nd, nn - check the tests")
   }
+  //fmt.Println("Returning",ssa,sn,ns,nn)
+  //fmt.Println("Resulting in", float64(2*ssa)/float64(2*ssa+sn+ns),float64(2*nn)/float64(2*nn+sn+ns))
   return float64(2*ssa)/float64(2*ssa+sn+ns),float64(2*nn)/float64(2*nn+sn+ns)
 }
 
@@ -149,7 +153,8 @@ func CreateRun(filename string,sortkey int64) *SubcollectionRun {
 
   defer file.Close()
   run := new(SubcollectionRun)
-  run.name = path.Base(filename);
+  run.name = path.Base(filename)
+  run.filename = filename
 
   reader := csv.NewReader(file)
   reader.TrailingComma = true;
@@ -161,8 +166,7 @@ func CreateRun(filename string,sortkey int64) *SubcollectionRun {
 
   run.sortkey, err = strconv.ParseFloat(record[sortkey],64)
 
-  
-  fmt.Println(run.name , ": num documents ",record[0], " num evaluated ", record[1], " percent evaluated " , record[2], " num rel " ,record[3], " percent rel ", record[4], " num non-rel " , record[5], " percent non-rel ", record[6]  );
+  fmt.Println(filename , ": num documents ",record[0], " num evaluated ", record[1], " percent evaluated " , record[2], " num rel " ,record[3], " percent rel ", record[4], " num non-rel " , record[5], " percent non-rel ", record[6]  );
 
   if err != nil {
     log.Fatal(filename, " ", err)

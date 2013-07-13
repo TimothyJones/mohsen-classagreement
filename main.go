@@ -91,9 +91,11 @@ func main() {
     log.Fatal(err)
   }
   cols := make([]*SubcollectionRun,0,len(fileListing))
+  cols_ndcg := make([]*SubcollectionRun,0,len(fileListing))
   for _,file := range fileListing {
      if path.Ext(file.Name()) == ".csv"{
         cols = append(cols,CreateRun(path.Join(dirName,file.Name()),sortkey))
+        cols_ndcg = append(cols_ndcg,CreateRun(path.Join(path.Dir(dirName),"results_ndcg",file.Name()),sortkey))
      }
   }
 
@@ -102,6 +104,9 @@ func main() {
   // create and fill the results table
   numCols := len(cols)
   results := make([][]float64,numCols)
+  diagonal_ssa := make([]float64,numCols)
+  diagonal_nn := make([]float64,numCols)
+
   for i := range results {
     results[i] = make([]float64,numCols)
   }
@@ -111,6 +116,7 @@ func main() {
       results[i][j] = agree
       results[j][i] = disagree
     }
+    diagonal_ssa[i] , diagonal_nn[i] = CalcClassAgreement(cols_ndcg[i],cols[i])
   }
 
   // Print two tables. 
@@ -139,6 +145,25 @@ func main() {
     fmt.Println()
   }
   fmt.Println()
+
+  fmt.Print("map v ndcg,");
+  for i := 0; i < numCols; i++ {
+    fmt.Print(cols[i].name, "(",cols[i].sortkey,"),")
+  }
+  fmt.Println()
+  fmt.Print("SSA,")
+  for i := 0; i < numCols; i++ {
+    fmt.Print(diagonal_ssa[i],",")
+  }
+  fmt.Println()
+  fmt.Print("NN,")
+  for i := 0; i < numCols; i++ {
+    fmt.Print(diagonal_nn[i],",")
+  }
+  fmt.Println()
+  fmt.Println()
+
+
   // Now NN
   // Print the table header
   fmt.Print(collectionName," NN,");
