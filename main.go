@@ -100,12 +100,26 @@ func main() {
   }
 
   sort.Sort(BySortkey{cols})
+  sort.Sort(BySortkey{cols_ndcg})
 
   // create and fill the results table
   numCols := len(cols)
+
+/*  for i :=0; i < numCols; i++ {
+    if cols[i].sortkey < 500 {
+      numCols = i
+      break
+    }
+  }*/
+
   results := make([][]float64,numCols)
+
+  means_ssa := make([]float64,numCols)
+  means_nn := make([]float64,numCols)
+
   diagonal_ssa := make([]float64,numCols)
   diagonal_nn := make([]float64,numCols)
+
 
   for i := range results {
     results[i] = make([]float64,numCols)
@@ -115,9 +129,26 @@ func main() {
       agree, disagree := CalcClassAgreement(cols[i],cols[j])
       results[i][j] = agree
       results[j][i] = disagree
+      means_ssa[j] += agree
+      means_ssa[i] += agree
+      means_nn[j] += disagree
+      means_nn[i] += disagree
     }
     diagonal_ssa[i] , diagonal_nn[i] = CalcClassAgreement(cols_ndcg[i],cols[i])
   }
+
+ /* // Just print SSA
+  for i := 0; i < numCols; i++ {
+    for j := 0 ; j < numCols; j++ {
+      if i != j {
+        if i < j {
+          fmt.Println(cols[i].name,",",cols[j].name,",",results[i][j])
+        }
+      }
+    }
+  }
+  return*/
+
 
   // Print two tables. 
   // SSA first
@@ -144,6 +175,11 @@ func main() {
     }
     fmt.Println()
   }
+  fmt.Print("Mean,")
+  for i := 0; i < numCols; i++ {
+    fmt.Print(means_ssa[i]/float64(numCols-1),",")
+  }
+  fmt.Println()
   fmt.Println()
 
   fmt.Print("map v ndcg,");
@@ -188,4 +224,9 @@ func main() {
     }
     fmt.Println()
   }
+  fmt.Print("Mean,")
+  for i := 0; i < numCols; i++ {
+    fmt.Print(means_nn[i]/float64(numCols-1),",")
+  }
+  fmt.Println()
 }
